@@ -23,8 +23,6 @@ namespace Discord_Client_Custom.Connections
 
         public async static Task<JsonNode> sendMessage(string content, string ep)
         {
-            Debug.WriteLine(ep);
-
             try
             {
                 var client = new HttpClient();
@@ -61,6 +59,50 @@ namespace Discord_Client_Custom.Connections
 
                 return responseJSON;
             } catch (Exception e)
+            {
+                Debug.WriteLine(e);
+                return null;
+            }
+        }
+
+
+        public static async Task<JsonNode> sendTyping(string url)
+        {
+            try
+            {
+                var client = new HttpClient();
+
+                var request = new HttpRequestMessage()
+                {
+                    RequestUri = new Uri(url),
+                    Method = HttpMethod.Post,
+                };
+
+                request.Headers.Clear();
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                //CHANGE THIS TO CONFIG LATER
+                request.Headers.Add("Authorization", userToken);
+                request.Headers.Add("User-Agent", ".NET Foundation Repository Reporter");
+
+
+                var taskResponse = await client.SendAsync(request);
+                var responseContent = await taskResponse.Content.ReadAsStringAsync();
+
+                //Typing
+                if (responseContent.Length == 0) return null;
+
+                JsonNode responseJSON = JsonNode.Parse(responseContent);
+
+                if (taskResponse.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    Debug.Write(responseJSON["message"]);
+                    return null;
+                }
+
+                return responseJSON;
+            }
+            catch (Exception e)
             {
                 Debug.WriteLine(e);
                 return null;

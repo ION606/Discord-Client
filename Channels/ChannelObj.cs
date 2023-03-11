@@ -4,6 +4,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Drawing;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text.Json.Nodes;
 using static Discord_Client_Custom.client_internals.Client;
@@ -48,6 +49,7 @@ namespace Discord_Client_Custom.Channels
         private static string? cicon;
         private static string? cownerId;
         private string lastSent;
+        private static System.Threading.Timer typingTimer;
 
 
         public ChannelObj() { }
@@ -191,21 +193,48 @@ namespace Discord_Client_Custom.Channels
                     }
 
                     var response = await MsgRequests.sendMessage(txtbx.Text, ep);
+                    if (response == null)
+                    {
+                        MessageBox.Show(response.ToJsonString(), "Message failed with the following reason");
+                        return;
+                    }
+
                     //JsonNode[] arr = new JsonNode[1];
                     //arr[0] = response;
 
                     //Add the message to chat in the app
                     groupedMsgs.Add(new ChannelMsgGroup(response, dmFlowContent, uMainIcon, i + 1));
                     txtbx.Clear();
+                    typingTimer.Dispose();
 
                     i++;
                     dmFlowContent.Controls.Remove(txtbx);
                     dmFlowContent.Controls.Add(txtbx, 1, i + 1);
                     dmFlowContent.SetColumnSpan(txtbx, 2);
+                    dmFlowContent.ScrollControlIntoView(txtbx);
                 } else
                 {
                     //Do typing intent stuff here
-                    //Connection
+                    string ep;
+                    if (ctype == 1)
+                    {
+                        ep = "https://discord.com/api/channels/" + cid2 + "/typing";
+                        if (txtbx.Text.Length == 0)
+                        {
+                            typingTimer = new System.Threading.Timer((object state) => {
+                                Debug.WriteLine("TYPING....");
+                                MsgRequests.sendTyping(ep);
+                            });
+
+                            typingTimer.Change(0, 10000);
+                        }
+                    }
+                    else
+                    {
+                        //Deal with group message stuff here.....
+                        Debug.WriteLine("Message Sending has not been implemented for group DMs (yet)");
+                        return;
+                    }
                 }
             };
 
