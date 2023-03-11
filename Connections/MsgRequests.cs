@@ -9,8 +9,9 @@ namespace Discord_Client_Custom.Connections
 {
     internal class MsgRequests
     {
+        private static int msgFetchLimit = 50;
         private static string dmMePath = "https://discord.com/api/users/@me/channels";
-        private static string dmGetMsgsBasepath = "https://discord.com/api/channels/{{id}}/messages?limit=10";
+        private static string dmGetMsgsBasepath = "https://discord.com/api/channels/{{id}}/messages?limit=" + msgFetchLimit.ToString();
         public static string userToken = System.Environment.GetEnvironmentVariable("userToken");
 
         public MsgRequests(string url, string reqType)

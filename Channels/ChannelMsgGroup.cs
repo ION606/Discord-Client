@@ -159,6 +159,7 @@ namespace Discord_Client_Custom.Channels
             Label txt = new Label();
             txt.Text = msg.getContent();
             txt.Tag = msg.getId();
+            txt.Padding = new Padding(0, 0, 0, 10);
 
             txt.MaximumSize = new Size(dmFlowContent.Width - 70, 100000000);
             txt.AutoSize = true;

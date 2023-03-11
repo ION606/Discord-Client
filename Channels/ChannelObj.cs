@@ -89,7 +89,7 @@ namespace Discord_Client_Custom.Channels
 
             //There's gonna be a faster way
             var arr = contents.AsArray().ToArray().Reverse().ToArray();
-            string id_current = (string)arr.Last()["id"];
+            string id_current = (string)arr[0]["author"]["id"];
             int startInd = 0;
 
             //Make sure the first column is consitant
@@ -98,43 +98,62 @@ namespace Discord_Client_Custom.Channels
             dmFlowContent.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             //dmFlowContent.ColumnStyles[1].Width = 500;
 
+            //Add all content into one "message"
+            string msgContent = ""; //(string)arr[0]["content"];
             int i;
+
+            int skipCounter = 0;
+            
             for (i = 0; i < arr.Length; i++)
             {
-                if ((string)arr[i]["content"] == "") continue;
+                if ((string)arr[i]["content"] == "")
+                {
+                    skipCounter++;
+                    continue;
+                }
+
+                //Remove when attatcmenent integration is added
+                if (msgContent.Length == 0 && skipCounter == i) id_current = (string)arr[i]["author"]["id"];
 
                 string authorName = (string)arr[i]["author"]["id"];
-                //Removed for spacing reasons
-                //if (authorName != id_current)
-                //{
-                Debug.WriteLine(arr[i]["content"]);
-                    if (authorName == uMainId)
+
+                if (authorName != id_current)
+                {
+                    var msgObjTemp = (JsonNode)arr[startInd];
+                    msgObjTemp["content"] = msgContent;
+
+                    if (authorName != uMainId)
                     {
-                        groupedMsgs.Add(new ChannelMsgGroup(arr[i], dmFlowContent, uMainIcon, i));
+                        groupedMsgs.Add(new ChannelMsgGroup(msgObjTemp, dmFlowContent, uMainIcon, i));
                     }
                     else
                     {
-                        groupedMsgs.Add(new ChannelMsgGroup(arr[i], dmFlowContent, uicon, i));
+                        groupedMsgs.Add(new ChannelMsgGroup(msgObjTemp, dmFlowContent, uicon, i));
                     }
 
                     startInd = i;
                     id_current = authorName;
-                //}
+                    msgContent = "";
+                }
+
+                msgContent += arr[i]["content"] + "\n";
             }
 
             
-            /*
             if (i != startInd)
             {
+                var msgObjTemp = (JsonNode)arr[startInd];
+                msgObjTemp["content"] = msgContent;
+
                 if ((string)arr[startInd]["author"]["id"] == uMainId)
                 {
-                    groupedMsgs[groupedMsgs.Count - 1] = new ChannelMsgGroup(arr[startInd..i], dmFlowContent, uMainIcon, i);
+                    groupedMsgs[groupedMsgs.Count - 1] = new ChannelMsgGroup(msgObjTemp, dmFlowContent, uMainIcon, i);
                 }
                 else
                 {
-                    groupedMsgs[groupedMsgs.Count - 1] = new ChannelMsgGroup(arr[startInd..i], dmFlowContent, uicon, i);
+                    groupedMsgs[groupedMsgs.Count - 1] = new ChannelMsgGroup(msgObjTemp, dmFlowContent, uicon, i);
                 }
-            }*/
+            }
 
             lastSent = id_current;
 
@@ -158,7 +177,7 @@ namespace Discord_Client_Custom.Channels
                     }
 
                     var response = await MsgRequests.sendMessage(txtbx.Text, ep);
-                    JsonNode[] arr = new JsonNode[1];
+                    //JsonNode[] arr = new JsonNode[1];
                     //arr[0] = response;
 
                     //Add the message to chat in the app
@@ -178,6 +197,7 @@ namespace Discord_Client_Custom.Channels
 
             dmFlowContent.Controls.Add(txtbx, 0, i+1);
             dmFlowContent.SetColumnSpan(txtbx, 2);
+            dmFlowContent.ScrollControlIntoView(txtbx);
         }
 
 
