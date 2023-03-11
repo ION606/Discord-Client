@@ -29,7 +29,7 @@ namespace Discord_Client_Custom.Channels
                     discriminator = inp["discriminator"].ToString();
 
                     //Check for deleted user
-                    if ((string)inp["avatar"] != "")
+                    if ((string)inp["avatar"] != null)
                     {
                         avatar = inp["avatar"].ToString();
                     }

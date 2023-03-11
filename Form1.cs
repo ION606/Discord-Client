@@ -46,7 +46,13 @@ namespace Discord_Client_Custom
 
         private async void mainPage_Load(object sender, EventArgs e)
         {
-            //Console.WriteLine("ok");
+            /*if (Environment.GetEnvironmentVariable("userToken") == null)
+            {
+                string promptValue = Prompt.ShowDialog("Please enter token", "prompt");
+                
+                Environment.SetEnvironmentVariable("userToken", promptValue);
+           }*/
+
             var c = new Connection();
             var uInfoRaw = await c.connect(dmFlowPannel);
 

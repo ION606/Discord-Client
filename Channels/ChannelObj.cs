@@ -2,6 +2,7 @@
 using Discord_Client_Custom.Connections;
 using System.Collections;
 using System.Diagnostics;
+using System.Drawing;
 using System.Net;
 using System.Runtime.Serialization;
 using System.Text.Json.Nodes;
@@ -147,15 +148,28 @@ namespace Discord_Client_Custom.Channels
 
                 if ((string)arr[startInd]["author"]["id"] == uMainId)
                 {
-                    groupedMsgs[groupedMsgs.Count - 1] = new ChannelMsgGroup(msgObjTemp, dmFlowContent, uMainIcon, i);
+                    new ChannelMsgGroup(msgObjTemp, dmFlowContent, uMainIcon, i);
                 }
                 else
                 {
-                    groupedMsgs[groupedMsgs.Count - 1] = new ChannelMsgGroup(msgObjTemp, dmFlowContent, uicon, i);
+                    new ChannelMsgGroup(msgObjTemp, dmFlowContent, uicon, i);
                 }
             }
 
             lastSent = id_current;
+
+            //Check if this is a system DM
+            if (arr[0]["author"]["system"] != null)
+            {
+                var cantSendLabel = new Label();
+                cantSendLabel.Text = "This is a system channel, so you can't send any messages!";
+
+                dmFlowContent.Controls.Add(cantSendLabel, 0, i + 1);
+                dmFlowContent.SetColumnSpan(cantSendLabel, 2);
+                dmFlowContent.ScrollControlIntoView(cantSendLabel);
+
+                return;
+            }
 
             //Add the text box
             var txtbx = new RichTextBox();
@@ -248,7 +262,7 @@ namespace Discord_Client_Custom.Channels
 
             var imgRaw = await getIconStream(iconUrl);
             imgRaw.Tag = iconUrl;
-            return imgRaw;
+            return (Image)(new Bitmap(imgRaw, new Size(32, 32))); ;
 
             //string rootPath = @"C:\DownloadedImageFromUrl";
             //string fileName = System.IO.Path.Combine(rootPath, "test.gif");
