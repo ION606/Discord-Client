@@ -205,11 +205,11 @@ namespace Discord_Client_Custom.Channels
                         return;
                     }
 
-                    //JsonNode[] arr = new JsonNode[1];
-                    //arr[0] = response;
+                    // JsonNode[] arr = new JsonNode[1];
+                    // arr[0] = response;
 
-                    //Add the message to chat in the app
-                    insertMessage(dmFlowContent, uMainIcon, response);
+                    // Add the message to chat in the app
+                    // insertMessage(dmFlowContent, uMainIcon, response);
                 }
                 else
                 {
@@ -243,6 +243,24 @@ namespace Discord_Client_Custom.Channels
         }
 
 
+
+        public string getName()
+        {
+            if (cname != null)
+            {
+                return cname;
+            }
+
+            return users[0].getUserName();
+        }
+
+
+        public string getId()
+        {
+            return cid;
+        }
+
+
         public async void insertMessage(TableLayoutPanel dmFlowContent, string iconUrl, JsonNode? response)
         {
             Image avatar = (Image)(new Bitmap(await ChannelObj.getIconStream(iconUrl), new Size(32, 32)));
@@ -270,23 +288,6 @@ namespace Discord_Client_Custom.Channels
             dmFlowContent.SetColumnSpan(txtbx, 2);
             txtbx.AppendText(temptxtbxtxt);
             dmFlowContent.ScrollControlIntoView(txtbx);
-        }
-
-
-        public string getName()
-        {
-            if (cname != null)
-            {
-                return cname;
-            }
-
-            return users[0].getUserName();
-        }
-
-
-        public string getId()
-        {
-            return cid;
         }
 
 
