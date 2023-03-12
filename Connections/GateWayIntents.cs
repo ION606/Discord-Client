@@ -46,7 +46,10 @@ namespace Discord_Client_Custom.Connections
         {
             if (isDmOnly)
             {
-                GatewayIntent[] intentsTemp = { GatewayIntent.DirectMessages, GatewayIntent.DirectMessageReactions, GatewayIntent.DirectMessageTyping };
+                GatewayIntent[] intentsTemp = {
+                    GatewayIntent.DirectMessages, GatewayIntent.DirectMessageReactions, GatewayIntent.DirectMessageTyping,
+                    GatewayIntent.GuildPresences, GatewayIntent.MessageContent
+                };
                 this.intents = intentsTemp;
                 this.value = sum(intents);
             } else

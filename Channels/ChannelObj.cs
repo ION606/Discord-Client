@@ -50,9 +50,12 @@ namespace Discord_Client_Custom.Channels
         private static string? cownerId;
         private string lastSent;
         private static System.Threading.Timer typingTimer;
+        private int msgIndex;
+        private RichTextBox txtbx;
 
 
         public ChannelObj() { }
+
 
         //For displaying information
         public ChannelObj(JsonNode contents)
@@ -173,8 +176,10 @@ namespace Discord_Client_Custom.Channels
                 return;
             }
 
+            msgIndex = i;
+
             //Add the text box
-            var txtbx = new RichTextBox();
+            txtbx = new RichTextBox();
             txtbx.AutoWordSelection = true;
             txtbx.Size = new Size(dmFlowContent.Width - 50, 50);
             txtbx.KeyDown += async (object o, KeyEventArgs k) =>
@@ -185,7 +190,8 @@ namespace Discord_Client_Custom.Channels
                     if (ctype == 1)
                     {
                         ep = "https://discord.com/api/channels/" + cid2 + "/messages";
-                    } else
+                    }
+                    else
                     {
                         //Deal with group message stuff here.....
                         Debug.WriteLine("Message Sending has not been implemented for group DMs (yet)");
@@ -203,16 +209,9 @@ namespace Discord_Client_Custom.Channels
                     //arr[0] = response;
 
                     //Add the message to chat in the app
-                    groupedMsgs.Add(new ChannelMsgGroup(response, dmFlowContent, uMainIcon, i + 1));
-                    txtbx.Clear();
-                    typingTimer.Dispose();
-
-                    i++;
-                    dmFlowContent.Controls.Remove(txtbx);
-                    dmFlowContent.Controls.Add(txtbx, 1, i + 1);
-                    dmFlowContent.SetColumnSpan(txtbx, 2);
-                    dmFlowContent.ScrollControlIntoView(txtbx);
-                } else
+                    insertMessage(dmFlowContent, uMainIcon, response);
+                }
+                else
                 {
                     //Do typing intent stuff here
                     string ep;
@@ -240,6 +239,36 @@ namespace Discord_Client_Custom.Channels
 
             dmFlowContent.Controls.Add(txtbx, 0, i+1);
             dmFlowContent.SetColumnSpan(txtbx, 2);
+            dmFlowContent.ScrollControlIntoView(txtbx);
+        }
+
+
+        public async void insertMessage(TableLayoutPanel dmFlowContent, string iconUrl, JsonNode? response)
+        {
+            Image avatar = (Image)(new Bitmap(await ChannelObj.getIconStream(iconUrl), new Size(32, 32)));
+            avatar.Tag = iconUrl;
+
+            insertMessage(dmFlowContent, avatar, response, true);
+        }
+
+        //Response is the new message in Json format
+        public void insertMessage(TableLayoutPanel dmFlowContent, Image uMainIcon, JsonNode? response, bool isCalledFromHelper = true)
+        {
+            groupedMsgs.Add(new ChannelMsgGroup(response, dmFlowContent, uMainIcon, msgIndex + 1));
+            txtbx.Clear();
+
+            if (typingTimer != null) typingTimer.Dispose();
+
+            msgIndex += 2;
+
+            var temptxtbxtxt = "";
+            if (isCalledFromHelper) temptxtbxtxt = new string(txtbx.Text);
+
+
+            dmFlowContent.Controls.Remove(txtbx);
+            dmFlowContent.Controls.Add(txtbx, 1, msgIndex);
+            dmFlowContent.SetColumnSpan(txtbx, 2);
+            txtbx.AppendText(temptxtbxtxt);
             dmFlowContent.ScrollControlIntoView(txtbx);
         }
 
@@ -291,7 +320,7 @@ namespace Discord_Client_Custom.Channels
 
             var imgRaw = await getIconStream(iconUrl);
             imgRaw.Tag = iconUrl;
-            return (Image)(new Bitmap(imgRaw, new Size(32, 32))); ;
+            return (Image)(new Bitmap(imgRaw, new Size(32, 32)));
 
             //string rootPath = @"C:\DownloadedImageFromUrl";
             //string fileName = System.IO.Path.Combine(rootPath, "test.gif");

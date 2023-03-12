@@ -4,8 +4,8 @@ using System.Reactive.Linq;
 using System.Text.Json.Nodes;
 using Websocket.Client;
 using Discord_Client_Custom.client_internals;
-
-
+using Discord_Client_Custom.Channels;
+using System.ComponentModel;
 
 namespace Discord_Client_Custom.Connections
 {
@@ -19,6 +19,8 @@ namespace Discord_Client_Custom.Connections
         private WebsocketClient WS;
         private GateWayIntents intents;
         public JsonNode uInfoRaw;
+        private object gateWayProperties;
+        private readonly mainPage pageRef;
 
 
         private async void heartBeat(object o)
@@ -28,6 +30,7 @@ namespace Discord_Client_Custom.Connections
 
             WS.Send(toSend);
             heartBeatCounter++;
+            Debug.WriteLine("PING");
         }
 
 
@@ -37,6 +40,13 @@ namespace Discord_Client_Custom.Connections
             heartBeatInterval = (int)confObj["d"]["heartbeat_interval"];
             Debug.WriteLine("INTERVAL SET TO: " + heartBeatInterval.ToString());
 
+            gateWayProperties = new
+            {
+                os = "linux",
+                browser = "ion_",
+                device = "my_library"
+            };
+
             var idObj = new
             {
                 op = 2,
@@ -44,12 +54,7 @@ namespace Discord_Client_Custom.Connections
                 {
                     token = MsgRequests.userToken,
                     intents = intents.value, //61440,
-                    properties = new
-                    {
-                        os = "linux",
-                        browser = "my_library",
-                        device = "my_library"
-                    }
+                    properties = gateWayProperties
                 }
             };
 
@@ -60,18 +65,49 @@ namespace Discord_Client_Custom.Connections
         }
 
 
-        private static void statusUpdate(object statusObj)
+        private void getStatusUpdate(object statusObj)
         {
             //Console.WriteLine(statusObj.ToString() + "\n\n");
         }
 
 
-        private static void messageEvent(object msgObj)
+        //{"t":"MESSAGE_CREATE","s":3,"op":0,"d":{"type":0,"tts":false,"timestamp":"2023-03-12T16:13:52.238000+00:00","referenced_message":null,"pinned":false,"nonce":"1084509575685603328","mentions":[],"mention_roles":[],"mention_everyone":false,"id":"1084509576445042838","flags":0,"embeds":[],"edited_timestamp":null,"content":"ping","components":[],"channel_id":"907088809169158164","author":{"username":"1.1.5","public_flags":0,"id":"720349017829015633","display_name":null,"discriminator":"4592","avatar_decoration":null,"avatar":null},"attachments":[]}}
+        private void messageEvent(object msgObj)
         {
-            Console.WriteLine(msgObj.ToString() + "\n\n");
+            pageRef.insertMessageObj(msgObj);
         }
 
-        public async Task<JsonNode> connect(FlowLayoutPanel dmFlowPannel)
+
+        private bool isRunning(bool printToDebug = false)
+        {
+            if (printToDebug) Debug.WriteLine("WEBSOCKET SERVER IS RUNNING? " + WS.IsRunning.ToString());
+            return WS.IsRunning;
+        }
+
+
+        // Setters
+
+        // https://discord.com/developers/docs/topics/gateway-events#update-presence
+        public async void setStatusUpdate(string status)
+        {
+            var idObj = new
+            {
+                op = 3,
+                d = new
+                {
+                    since = 0,
+                    activities = new object[0],
+                    status = status,
+                    afk = false
+                }
+            };
+
+            var objToSend = System.Text.Json.JsonSerializer.Serialize(idObj);
+            WS.Send(objToSend);
+        }
+
+
+        public async void connect(FlowLayoutPanel dmFlowPannel)
         {
             using (var client = new WebsocketClient(gateWayUrl))
             {
@@ -89,6 +125,7 @@ namespace Discord_Client_Custom.Connections
                 {
                     var configs = JsonNode.Parse(msg.Text);
                     //var c = new Client(configs["d"], dmFlowPannel);
+                    Debug.WriteLine("\n\nlhkdsfgjhdsgfhsjdgf\n\n");
                     uInfoRaw = configs["d"];
                 });
 
@@ -97,10 +134,18 @@ namespace Discord_Client_Custom.Connections
                 {
                     var msgObj = JsonNode.Parse(msg.Text);
                     return ((string)msgObj["t"] == "PRESENCE_UPDATE");
-                }).Subscribe(statusUpdate);
+                }).Subscribe(getStatusUpdate);
 
 
-                // client.MessageReceived.Subscribe(msg => Debug.WriteLine($"Message received: {msg}"));
+                //client.MessageReceived.Subscribe(msg => Console.WriteLine($"Message received: {msg}"));
+
+                /*client.MessageReceived.Where(msg =>
+                {
+                    var msgObj = JsonNode.Parse(msg.Text);
+                    if (msgObj["t"] != null) return msgObj["t"].ToString() != "READY";
+                    else return true;
+                }).Subscribe((msg) => Debug.WriteLine($"Message received: {msg}"));*/
+
 
                 client.MessageReceived.Where((msg) =>
                 {
@@ -118,29 +163,33 @@ namespace Discord_Client_Custom.Connections
                 {
                     var msgObj = JsonNode.Parse(msg.Text);
                     return ((string)msgObj["t"] == "PRESENCE_UPDATE");
-                }).Subscribe(statusUpdate);
+                }).Subscribe(getStatusUpdate);
+
 
                 client.MessageReceived.Where((msg) =>
                 {
                     var msgObj = JsonNode.Parse(msg.Text);
-                    return ((int)msgObj["op"] == 0) && (string)msgObj["t"] == "MESSAGE_CREATE";
+                    return ((int)msgObj["op"] == 0) && msgObj["t"].ToString() == "MESSAGE_CREATE";
                 }).Subscribe(messageEvent);
 
 
+                client.DisconnectionHappened.Subscribe((info) => Debug.WriteLine(info.ToString()));
                 client.Start();
 
-                Task.Run(() => client.Send("{ message }"));
                 WS = client;
 
-                //exitEvent.WaitOne();
-                
-                while (uInfoRaw == null) { }
-                return uInfoRaw;
+                await Task.Run(() => client.Send("{ message }"));
+
+                exitEvent.WaitOne();
+
+                //return this.uInfoRaw;
             }
+
         }
 
-        public Connection() {
-            
+        public Connection(mainPage pageRefTemp)
+        {
+            this.pageRef = pageRefTemp;
         }
     }
 }

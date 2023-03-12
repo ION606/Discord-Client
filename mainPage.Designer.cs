@@ -86,6 +86,9 @@
             
             //this.dmFlowContent.WrapContents = true;
             this.Controls.Add(this.dmFlowContent);
+
+            this.statusbox = new ComboBox();
+            this.statusbox.Location = new System.Drawing.Point(1, this.dmFlowContent.Bottom + 1);
         }
 
         #endregion
@@ -94,5 +97,7 @@
 
         //FFS find a way to fix this ASAP
         public TableLayoutPanel dmFlowContent;
+
+        private ComboBox statusbox;
     }
 }

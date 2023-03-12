@@ -142,8 +142,8 @@ namespace Discord_Client_Custom.Connections
 
             return responseJSON;
         }
+        
 
-        //Returns the 
         public static async Task<JsonNode> getMessages(string cid, string? lastId = null)
         {
             string newUrl = dmGetMsgsBasepath.Replace("{{id}}", cid);

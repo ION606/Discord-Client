@@ -48,6 +48,8 @@ namespace Discord_Client_Custom.client_internals
 
             public userMain(JsonNode uConfigs, JsonNode uObj, JsonNode[] chnls, user[] relshnshps) {
                 customStatus = uConfigs["custom_status"];
+                customStatus["status"] = JsonNode.Parse(uConfigs["status"].ToJsonString());
+
                 locale = uConfigs["locale"].ToString();
                 theme = uConfigs["theme"].ToString();
 
@@ -71,6 +73,7 @@ namespace Discord_Client_Custom.client_internals
 
             public Image getAvatar() { return avatar; }
             public string getId() { return id; }
+            public JsonNode getStatus() { return this.customStatus; }
         }
 
         userMain uMain;
